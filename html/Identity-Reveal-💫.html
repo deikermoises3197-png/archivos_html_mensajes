@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Identity Card Ultimate Edition 💎</title>
+    <style>
+        /* --- ESTILOS GENERALES --- */
+        :root {
+            --bg-color: #050505;
+            --card-bg: #141414;
+            --accent: #00ff9d; /* Verde Neón */
+            --accent-2: #00b8ff; /* Azul Neón */
+            --neon-purple: #d400ff; /* Morado intenso */
+            --text: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* --- LUZ AMBIENTAL DE FONDO (GIRATORIA) --- */
+        .ambient-light {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 150vmax;
+            height: 150vmax;
+            z-index: -10;
+            pointer-events: none;
+            background: conic-gradient(
+                from 0deg,
+                transparent 0deg,
+                rgba(0, 255, 157, 0.2) 40deg,
+                transparent 100deg,
+                rgba(0, 184, 255, 0.2) 180deg,
+                transparent 240deg,
+                rgba(212, 0, 255, 0.2) 300deg,
+                transparent 360deg
+            );
+            filter: blur(80px);
+            animation: spinBackground 20s linear infinite;
+        }
+
+        @keyframes spinBackground {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        h1 {
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            font-size: 2rem;
+            font-weight: 900;
+            position: relative; z-index: 10;
+            text-shadow: 0 0 20px rgba(0, 255, 157, 0.3);
+        }
+
+        /* --- FORMULARIO --- */
+        .form-box {
+            background-color: rgba(20, 20, 20, 0.7);
+            backdrop-filter: blur(15px);
+            padding: 25px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 350px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
+
+        label { margin-top: 15px; display: block; font-size: 0.8rem; color: #aaa; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; }
+        input, select { width: 100%; padding: 12px; margin-top: 5px; background: rgba(0,0,0,0.5); border: 1px solid #444; border-radius: 10px; color: white; font-size: 1rem; box-sizing: border-box; }
+        input[type="file"] { padding: 10px; background: rgba(0,0,0,0.3); font-size: 0.8rem; }
+        
+        .btn-generate { width: 100%; padding: 15px; margin-top: 25px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); border: none; border-radius: 10px; color: #000; font-weight: 800; font-size: 1rem; cursor: pointer; text-transform: uppercase; transition: transform 0.2s, box-shadow 0.2s; }
+        .btn-generate:hover { transform: scale(1.02); box-shadow: 0 0 25px rgba(0, 255, 157, 0.5); }
+
+        .btn-download { width: 100%; padding: 15px; margin-top: 15px; background: linear-gradient(135deg, #ff0055, #bd00ff); border: none; border-radius: 10px; color: #fff; font-weight: 800; font-size: 1rem; cursor: pointer; text-transform: uppercase; transition: transform 0.2s; display: none; }
+        .btn-download:hover { transform: scale(1.02); box-shadow: 0 0 25px rgba(189, 0, 255, 0.6); }
+
+        /* --- ÁREA DE RESULTADO --- */
+        #resultArea {
+            display: none;
+            margin-top: 40px;
+            margin-bottom: 60px;
+            animation: popUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative; z-index: 5;
+        }
+
+        /* --- TARJETA --- */
+        .card-wrapper {
+            position: relative;
+            width: 306px; height: 506px;
+            display: flex; justify-content: center; align-items: center;
+            border-radius: 28px; z-index: 1; overflow: hidden; 
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            animation: floatCard 4s ease-in-out infinite;
+        }
+
+        .card-wrapper::before {
+            content: ''; position: absolute; width: 150%; height: 150%; top: -25%; left: -25%; 
+            background: conic-gradient(from 0deg, transparent 0deg, transparent 240deg, var(--neon-purple) 270deg, var(--accent-2) 310deg, var(--accent) 340deg, var(--accent) 360deg);
+            animation: rotateBorder 3s linear infinite; z-index: -2;
+        }
+
+        .card-wrapper::after {
+            content: ''; position: absolute; top: 2px; left: 2px; right: 2px; bottom: 2px;
+            background: #0a0a0a; border-radius: 25px; z-index: -1;
+            box-shadow: 0 0 30px var(--accent), 0 0 60px var(--neon-purple);
+            animation: pulseGlow 2s ease-in-out infinite alternate;
+        }
+        
+        .id-card { width: 300px; height: 500px; background-color: #0a0a0a; border-radius: 25px; position: relative; overflow: hidden; text-align: center; display: flex; flex-direction: column; align-items: center; z-index: 2; }
+        
+        .card-bg-blur { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; filter: blur(9px) brightness(0.4); z-index: 1; }
+        .card-content { position: relative; z-index: 2; padding: 30px 20px; height: 100%; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
+        .card-photo { width: 120px; height: 120px; border-radius: 50%; border: 3px solid #fff; background-color: #333; background-size: cover; background-position: center; margin-bottom: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.6); }
+        .card-role { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(5px); color: var(--accent); border: 1px solid var(--accent); padding: 5px 15px; border-radius: 50px; font-weight: 900; text-transform: uppercase; font-size: 0.75rem; margin-bottom: 10px; letter-spacing: 1.5px; }
+        .card-name { font-size: 1.8rem; margin: 0; font-weight: 800; color: #fff; text-shadow: 0 2px 5px rgba(0,0,0,0.8); line-height: 1.1; }
+        .card-desc { font-size: 0.9rem; color: #ccc; margin-top: 8px; font-style: italic; font-weight: 300; }
+        .tribe-emoji { font-size: 10rem; margin-top: auto; margin-bottom: -25px; filter: drop-shadow(0 0 20px rgba(255,255,255,0.3)); animation: floatEmoji 3s ease-in-out infinite; }
+
+        @keyframes popUp { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+        @keyframes floatEmoji { 0% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-15px) rotate(5deg); } 100% { transform: translateY(0px) rotate(0deg); } }
+        @keyframes rotateBorder { 100% { transform: rotate(360deg); } }
+        @keyframes pulseGlow { 0% { box-shadow: 0 0 20px var(--accent), 0 0 40px var(--neon-purple); } 100% { box-shadow: 0 0 35px var(--accent), 0 0 70px var(--accent-2); } }
+        @keyframes floatCard { 0% { transform: translateY(0px); } 50% { transform: translateY(-12px); } 100% { transform: translateY(0px); } }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-light"></div>
+
+    <h1>IDENTITY REVEAL ⚡</h1>
+
+    <div class="form-box">
+        <label>1. Nombre / Apodo:</label>
+        <input type="text" id="inpName" placeholder="Tu nombre..." maxlength="14">
+        
+        <label>2. Tribu Urbana:</label>
+        <select id="inpTribe">
+            <option value="Therian">🐺 Therian</option>
+            <option value="Otaku">🧑‍🎤 Otaku</option>
+            <option value="Gamer">🎮 Gamer</option>
+            <option value="Furry">🦊 Furry</option>
+            <option value="Otherkin">🐉 Otherkin</option>
+            <option value="Goth">🦇 Goth / Dark</option>
+            <option value="K-Poper">🎤 K-Pop Stan</option>
+            <option value="Aesthetic">✨ Aesthetic</option>
+            <option value="Gymrat">💪 Gym Rat</option>
+            <option value="Zombie">🧟 Zombie</option>
+            <option value="Humano">👨‍💼 Humano (NPC)</option>
+        </select>
+        
+        <label>3. Frase Corta:</label>
+        <input type="text" id="inpSub" placeholder="Ej. Lobo Solitario" maxlength="22">
+        
+        <label>4. Foto (Opcional):</label>
+        <input type="file" id="inpPhoto" accept="image/*">
+        
+        <button class="btn-generate" onclick="generar()">⚡ 1. PREVISUALIZAR ⚡</button>
+        <button class="btn-download" id="btnDownload" onclick="descargarHTML()">💾 2. GUARDAR TARJETA PERMANENTE</button>
+    </div>
+
+    <div id="resultArea">
+        <div class="card-wrapper">
+            <div class="id-card">
+                <div class="card-bg-blur" id="bgBlur"></div>
+                <div class="card-content">
+                    <div class="card-photo" id="displayPhoto"></div>
+                    <div class="card-role" id="displayTribe">🐺 THERIAN</div>
+                    <h2 class="card-name" id="displayName">NOMBRE</h2>
+                    <p class="card-desc" id="displaySub">Descripción aquí</p>
+                    <div class="tribe-emoji" id="displayEmoji">🐺</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPhotoData = "https://via.placeholder.com/150/222222/FFFFFF?text=Foto"; 
+        
+        function generar() {
+            const name = document.getElementById('inpName').value || "Anónimo";
+            const tribeSelect = document.getElementById('inpTribe');
+            const tribeValue = tribeSelect.value;
+            const sub = document.getElementById('inpSub').value || "Miembro Verificado";
+            const photoInput = document.getElementById('inpPhoto');
+
+            const emojis = { "Therian": "🐺", "Otaku": "🧑‍🎤", "Gamer": "🎮", "Furry": "🦊", "Otherkin": "🐉", "Goth": "🦇", "K-Poper": "🎤", "Aesthetic": "✨", "Gymrat": "💪","Zombie": "🧟", "Humano": "👨‍💼" }; 
+
+            document.getElementById('displayName').innerText = name;
+            document.getElementById('displayTribe').innerText = tribeValue.toUpperCase();
+            document.getElementById('displaySub').innerText = sub;
+            document.getElementById('displayEmoji').innerText = emojis[tribeValue] || "⭐";
+
+            const photoDiv = document.getElementById('displayPhoto');
+            const bgDiv = document.getElementById('bgBlur');
+
+            if (photoInput.files && photoInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentPhotoData = e.target.result;
+                    photoDiv.style.backgroundImage = `url(${currentPhotoData})`;
+                    bgDiv.style.backgroundImage = `url(${currentPhotoData})`;
+                }
+                reader.readAsDataURL(photoInput.files[0]);
+            } else {
+                photoDiv.style.backgroundImage = `url(${currentPhotoData})`;
+                bgDiv.style.backgroundImage = "none";
+                bgDiv.style.backgroundColor = "#111";
+            }
+
+            const resultArea = document.getElementById('resultArea');
+            resultArea.style.display = 'block';
+            document.getElementById('btnDownload').style.display = 'block';
+            resultArea.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function descargarHTML() {
+            const name = document.getElementById('displayName').innerText;
+            const tribe = document.getElementById('displayTribe').innerText;
+            const sub = document.getElementById('displaySub').innerText;
+            const emoji = document.getElementById('displayEmoji').innerText;
+            
+            // --- GENERACIÓN DEL ARCHIVO FINAL ---
+            const htmlContent = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarjeta Pro de ${name}</title>
+    <style>
+        :root { --bg-color: #050505; --accent: #00ff9d; --accent-2: #00b8ff; --neon-purple: #d400ff; --text: #ffffff; }
+        body { background-color: var(--bg-color); color: var(--text); display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; margin: 0; font-family: 'Segoe UI', sans-serif; overflow: hidden; position: relative; gap: 40px; }
+        
+        /* ESTILO DEL TÍTULO EN LA DESCARGA */
+        h1 { text-align: center; text-transform: uppercase; letter-spacing: 3px; background: linear-gradient(90deg, var(--accent), var(--neon-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; font-size: 2.5rem; font-weight: 900; position: relative; z-index: 10; text-shadow: 0 0 20px rgba(0, 255, 157, 0.3); animation: fadeIn 2s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* LUZ DE FONDO */
+        .ambient-light { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 150vmax; height: 150vmax; z-index: -10; pointer-events: none;
+            background: conic-gradient(from 0deg, transparent 0deg, rgba(0, 255, 157, 0.2) 40deg, transparent 100deg, rgba(0, 184, 255, 0.2) 180deg, transparent 240deg, rgba(212, 0, 255, 0.2) 300deg, transparent 360deg);
+            filter: blur(80px); animation: spinBackground 20s linear infinite; }
+        @keyframes spinBackground { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+
+        /* TARJETA */
+        .card-wrapper { position: relative; width: 306px; height: 506px; display: flex; justify-content: center; align-items: center; border-radius: 28px; z-index: 1; overflow: hidden; box-shadow: 0 0 50px rgba(0,0,0,0.8); animation: floatCard 4s ease-in-out infinite; }
+        .card-wrapper::before { content: ''; position: absolute; width: 150%; height: 150%; top: -25%; left: -25%; 
+            background: conic-gradient(from 0deg, transparent 0deg, transparent 240deg, var(--neon-purple) 270deg, var(--accent-2) 310deg, var(--accent) 340deg, var(--accent) 360deg);
+            animation: rotateBorder 3s linear infinite; z-index: -2; }
+        .card-wrapper::after { content: ''; position: absolute; top: 2px; left: 2px; right: 2px; bottom: 2px; background: #0a0a0a; border-radius: 25px; z-index: -1; box-shadow: 0 0 30px var(--accent), 0 0 60px var(--neon-purple); animation: pulseGlow 2s ease-in-out infinite alternate; }
+        
+        .id-card { width: 300px; height: 500px; background-color: #0a0a0a; border-radius: 25px; position: relative; overflow: hidden; text-align: center; display: flex; flex-direction: column; align-items: center; z-index: 2; }
+        
+        .card-bg-blur { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('${currentPhotoData}'); background-size: cover; background-position: center; filter: blur(9px) brightness(0.4); z-index: 1; }
+        .card-content { position: relative; z-index: 2; padding: 30px 20px; height: 100%; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
+        .card-photo { width: 120px; height: 120px; border-radius: 50%; border: 3px solid #fff; background-color: #333; background-image: url('${currentPhotoData}'); background-size: cover; background-position: center; margin-bottom: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.6); }
+        .card-role { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(5px); color: var(--accent); border: 1px solid var(--accent); padding: 5px 15px; border-radius: 50px; font-weight: 900; text-transform: uppercase; font-size: 0.75rem; margin-bottom: 10px; letter-spacing: 1.5px; }
+        .card-name { font-size: 1.8rem; margin: 0; font-weight: 800; color: #fff; text-shadow: 0 2px 5px rgba(0,0,0,0.8); line-height: 1.1; }
+        .card-desc { font-size: 0.9rem; color: #ccc; margin-top: 8px; font-style: italic; font-weight: 300; }
+        .tribe-emoji { font-size: 10rem; margin-top: auto; margin-bottom: -25px; filter: drop-shadow(0 0 20px rgba(255,255,255,0.3)); animation: floatEmoji 3s ease-in-out infinite; }
+
+        @keyframes floatEmoji { 0% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-15px) rotate(5deg); } 100% { transform: translateY(0px) rotate(0deg); } }
+        @keyframes rotateBorder { 100% { transform: rotate(360deg); } }
+        @keyframes pulseGlow { 0% { box-shadow: 0 0 20px var(--accent), 0 0 40px var(--neon-purple); } 100% { box-shadow: 0 0 35px var(--accent), 0 0 70px var(--accent-2); } }
+        @keyframes floatCard { 0% { transform: translateY(0px); } 50% { transform: translateY(-12px); } 100% { transform: translateY(0px); } }
+    </style>
+</head>
+<body>
+    <div class="ambient-light"></div>
+
+    <h1>IDENTITY REVEAL ⚡</h1>
+
+    <div class="card-wrapper">
+        <div class="id-card">
+            <div class="card-bg-blur"></div>
+            <div class="card-content">
+                <div class="card-photo"></div>
+                <div class="card-role">${tribe}</div>
+                <h2 class="card-name">${name}</h2>
+                <p class="card-desc">${sub}</p>
+                <div class="tribe-emoji">${emoji}</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`;
+
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `IDENTITY_REVEAL_${name}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+
+</body>
+</html>

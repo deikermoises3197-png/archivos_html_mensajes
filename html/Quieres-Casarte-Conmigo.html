@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Propuesta Eterna 💍</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Montserrat:wght@300;700&display=swap');
+
+        /* BLOQUEO DE SELECCIÓN DE TEXTO Y SCROLL */
+        * { 
+            margin: 0; padding: 0; box-sizing: border-box; touch-action: none; 
+            -webkit-user-select: none; /* iOS Safari */
+            -ms-user-select: none; /* Edge */
+            user-select: none; /* Estándar */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body { 
+            background: #000; overflow: hidden; height: 100%; width: 100%; position: fixed; 
+        }
+
+        #contenedor-final {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.6);
+            text-align: center; opacity: 0; filter: blur(25px);
+            z-index: 100; pointer-events: none; width: 90%;
+            transition: opacity 1.5s, filter 2s, transform 3s cubic-bezier(0.1, 0, 0, 1);
+        }
+
+        #contenedor-final.visible { 
+            opacity: 1; filter: blur(0px); 
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: all;
+        }
+
+        .animacion-flotar { animation: flotar 5s ease-in-out infinite; }
+
+        h1 {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(1.6rem, 7vw, 4rem);
+            color: #fff;
+            text-shadow: 0 0 15px rgba(255,255,255,0.7), 0 0 40px #ff0077;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-family: 'Montserrat', sans-serif;
+            color: #fff;
+            font-size: clamp(0.75rem, 3vw, 1.1rem);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 40px;
+        }
+
+        .botones-container {
+            display: flex; justify-content: center; align-items: center;
+            gap: 25px; height: 120px; position: relative;
+        }
+
+        .btn {
+            padding: 15px 35px; font-family: 'Montserrat', sans-serif;
+            font-size: 1.1rem; font-weight: 700; border: none;
+            border-radius: 50px; cursor: pointer; z-index: 110;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+        }
+
+        #btn-si { background: #fff; color: #ff0077; position: relative; }
+        #btn-no { background: #ff0077; color: #fff; position: relative; transition: transform 0.2s ease-out; }
+
+        #mensaje-aceptacion {
+            position: fixed; inset: 0; display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+            background: #000; z-index: 200; text-align: center;
+            opacity: 0; transition: opacity 2s ease;
+        }
+
+        #mensaje-aceptacion h2 {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(1.8rem, 10vw, 4.5rem);
+            color: #fff; text-shadow: 0 0 35px #ff0077, 0 0 10px #fff;
+            padding: 20px; z-index: 201;
+            animation: latidoFinal 4s ease-in-out infinite;
+        }
+
+        @keyframes latidoFinal { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+        @keyframes flotar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+        #instrucciones {
+            position: absolute; top: 25%;
+            color: rgba(255, 255, 255, 0.5);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.75rem; text-align: center; 
+            width: 100%; z-index: 10; opacity: 1;
+            transition: opacity 0.5s ease;
+            pointer-events: none; /* Para que no interfiera con los clics */
+        }
+
+        canvas { position: fixed; top: 0; left: 0; z-index: 5; pointer-events: none; width: 100%; height: 100%; }
+    </style>
+</head>
+<body oncontextmenu="return false;"> <div id="instrucciones">Mantén presionado el punto de luz</div>
+
+    <div id="contenedor-final">
+        <div class="animacion-flotar">
+            <h1>¿QUIERES CASARTE CONMIGO?</h1>
+            <p>Prometo amarte toda la vida ✨</p>
+            <div class="botones-container">
+                <button id="btn-si" class="btn">SÍ</button>
+                <button id="btn-no" class="btn">NO</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mensaje-aceptacion">
+        <h2>SABÍA QUE ACEPTARÍAS,<br>TE AMO ❤️</h2>
+    </div>
+
+    <canvas id="canvas-universo"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas-universo');
+        const ctx = canvas.getContext('2d');
+        const contenedor = document.getElementById('contenedor-final');
+        const btnNo = document.getElementById('btn-no');
+        const btnSi = document.getElementById('btn-si');
+        const msgFinal = document.getElementById('mensaje-aceptacion');
+        const instruc = document.getElementById('instrucciones');
+
+        let width, height, charge = 0, pressing = false, exploded = false, flashAlpha = 0;
+        let stars = [], particles = [], time = 0, huidas = 0, finalSpace = false;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        function moverNo() {
+            huidas++;
+            if (huidas < 5) {
+                const maxRange = 60; 
+                const x = (Math.random() - 0.5) * maxRange * 2;
+                const y = (Math.random() - 0.5) * maxRange * 2;
+                btnNo.style.transform = `translate(${x}px, ${y}px)`;
+            } else {
+                const rect = btnNo.getBoundingClientRect();
+                for(let i=0; i<60; i++) particles.push(new Particle(rect.left + rect.width/2, rect.top + rect.height/2, '#ff0077', 15));
+                btnNo.style.display = 'none';
+            }
+        }
+
+        btnNo.addEventListener('touchstart', (e) => { e.preventDefault(); moverNo(); });
+        btnNo.addEventListener('mouseover', moverNo);
+
+        function aceptarPropuesta() {
+            flashAlpha = 2.5;
+            for(let i=0; i<800; i++) particles.push(new Particle(width/2, height/2, i % 2 === 0 ? '#fff' : '#ffcc00', 60));
+            contenedor.style.opacity = "0";
+            setTimeout(() => {
+                contenedor.style.display = "none";
+                msgFinal.style.display = "flex";
+                finalSpace = true;
+                for (let i = 0; i < 400; i++) stars.push({ x: Math.random() * width, y: Math.random() * height, z: Math.random() * width, size: Math.random() * 2, blink: Math.random() * Math.PI });
+                setTimeout(() => { msgFinal.style.opacity = "1"; }, 100);
+            }, 600);
+        }
+
+        btnSi.addEventListener('click', aceptarPropuesta);
+        btnSi.addEventListener('touchstart', (e) => { e.preventDefault(); aceptarPropuesta(); });
+
+        class Particle {
+            constructor(x, y, color, force) {
+                this.x = x; this.y = y;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * force + 5;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.radius = Math.random() * 4 + 1;
+                this.alpha = 1; this.color = color;
+            }
+            update() { this.x += this.vx; this.y += this.vy; this.vx *= 0.92; this.vy *= 0.92; this.alpha -= 0.007; }
+            draw() { ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+        }
+
+        function bang() {
+            exploded = true; flashAlpha = 1.2;
+            instruc.style.display = 'none';
+            for (let i = 0; i < 400; i++) stars.push({ x: Math.random() * width, y: Math.random() * height, z: Math.random() * width, size: Math.random() * 2, blink: Math.random() * Math.PI });
+            for (let i = 0; i < 600; i++) {
+                let col = ['#fff', '#ff0077', '#00d4ff', '#ffcc00'][Math.floor(Math.random() * 4)];
+                particles.push(new Particle(width / 2, height / 2, col, 45));
+            }
+            setTimeout(() => { contenedor.classList.add('visible'); }, 800);
+        }
+
+        function update() {
+            time += 0.05;
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = (exploded || finalSpace) ? 'rgba(0, 0, 0, 0.25)' : '#000';
+            ctx.fillRect(0, 0, width, height);
+
+            if (!exploded && !finalSpace) {
+                if (pressing) {
+                    charge += 1.3; 
+                    instruc.style.opacity = "0";
+                    ctx.translate((Math.random() - 0.5) * (charge / 4), (Math.random() - 0.5) * (charge / 4));
+                } else { 
+                    charge = Math.max(0, charge - 3); 
+                    if(charge < 2 && instruc.style.display !== 'none') instruc.style.opacity = "1"; 
+                }
+                const pulse = Math.sin(time * 3.5) * 12;
+                const currentRadius = charge * 2.2 + 25 + pulse;
+                const grad = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, currentRadius);
+                grad.addColorStop(0, '#fff'); grad.addColorStop(0.5, '#ff0077'); grad.addColorStop(1, 'transparent');
+                ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(width/2, height/2, currentRadius, 0, Math.PI * 2); ctx.fill();
+                if (charge > 190) bang(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+            } else {
+                stars.forEach(s => {
+                    if (finalSpace) {
+                        s.z -= 15; if (s.z <= 0) s.z = width;
+                        let sx = (s.x - width/2) * (width/s.z) + width/2;
+                        let sy = (s.y - height/2) * (width/s.z) + height/2;
+                        ctx.fillStyle = "#fff"; ctx.fillRect(sx, sy, (1 - s.z / width) * 3, (1 - s.z / width) * 3);
+                    } else {
+                        s.blink += 0.03; ctx.globalAlpha = 0.3 + (Math.sin(s.blink) * 0.7);
+                        ctx.fillStyle = "#fff"; ctx.fillRect(s.x, s.y, s.size, s.size);
+                    }
+                });
+                particles.forEach((p, i) => { p.update(); p.draw(); if (p.alpha <= 0) particles.splice(i, 1); });
+            }
+            if (flashAlpha > 0) { ctx.globalAlpha = Math.min(1, flashAlpha); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, width, height); flashAlpha -= 0.03; }
+            requestAnimationFrame(update);
+        }
+
+        const handleStart = (e) => { 
+            if (!exploded) { pressing = true; instruc.style.opacity = "0"; }
+        };
+        const handleEnd = (e) => { 
+            pressing = false; if (!exploded && charge < 2) instruc.style.opacity = "1"; 
+        };
+        window.addEventListener('mousedown', handleStart);
+        window.addEventListener('touchstart', handleStart);
+        window.addEventListener('mouseup', handleEnd);
+        window.addEventListener('touchend', handleEnd);
+        
+        update();
+    </script>
+</body>
+</html>

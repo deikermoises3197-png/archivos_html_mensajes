@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nuestro Año 🩷</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Poppins,system-ui}
+body{
+  background:#f7f6f2;
+  min-height:100vh;
+  padding:15px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+h1{
+  font-size:clamp(32px,8vw,48px);
+  margin:0px 0;
+  color:#7a5c2e;
+  font-family:cursive;
+}
+
+.grid{
+  width:100%;
+  max-width:900px;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:18px;
+}
+
+.card{
+  background:#ddd;
+  aspect-ratio:1/1.15;
+  border-radius:12px;
+  background-size:cover;
+  background-position:center;
+  position:relative;
+  overflow:hidden;
+}
+
+.month{
+  position:absolute;
+  bottom:5px;
+  left:50%;
+  transform:translateX(-50%);
+  width:90%;
+  height:20px;
+  background:#fff;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
+  font-size:15px;
+  color:#7a5c2e;
+  white-space:nowrap;
+}
+
+.end-btn{
+  margin:15px;  /* espacio arriba y abajo */
+  width:70%;
+  max-width:360px;
+  display:block;
+}
+
+.controls{
+  margin:20px 0;
+  display:flex;
+  gap:15px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+
+.btn{
+  padding:14px 20px;
+  border-radius:14px;
+  border:none;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.upload{background:#fff;border:2px dashed #bbb}
+.create{background:#111;color:#fff}
+
+input{display:none}
+</style>
+</head>
+
+<body>
+
+<h1>Nuestro Año 🩷 2025</h1>
+
+<div class="controls">
+  <label class="btn upload">
+    📂 Agregar 12 fotos
+    <input type="file" id="photos" accept="image/*" multiple>
+  </label>
+ 
+</div>
+
+<div class="grid" id="grid"></div>
+<button class="btn create end-btn" id="create">
+  💾 CREAR HTML
+</button>
+
+<script>
+const months=[
+"Enero","Febrero","Marzo",
+"Abril","Mayo","Junio",
+"Julio","Agosto","Septiembre",
+"Octubre","Noviembre","Diciembre"
+];
+
+const grid=document.getElementById("grid");
+months.forEach(m=>{
+  const c=document.createElement("div");
+  c.className="card";
+  c.innerHTML=`<div class="month">${m}</div>`;
+  grid.appendChild(c);
+});
+
+const cards=[...document.querySelectorAll(".card")];
+let images=[];
+
+/* COMPRESIÓN */
+function compress(file){
+  return new Promise(r=>{
+    const i=new Image(), fr=new FileReader();
+    fr.onload=()=>{
+      i.onload=()=>{
+        const c=document.createElement("canvas");
+        const s=1000;
+        let w=i.width,h=i.height;
+        if(w>h && w>s){h*=s/w;w=s}
+        if(h>s){w*=s/h;h=s}
+        c.width=w;c.height=h;
+        c.getContext("2d").drawImage(i,0,0,w,h);
+        c.toBlob(b=>r(b),"image/jpeg",0.75);
+      }
+      i.src=fr.result;
+    }
+    fr.readAsDataURL(file);
+  });
+}
+
+photos.onchange=async()=>{
+  if(photos.files.length!==12){
+    alert("Debes subir exactamente 12 fotos");
+    photos.value="";
+    return;
+  }
+  images=await Promise.all([...photos.files].map(compress));
+  images.forEach((b,i)=>{
+    cards[i].style.backgroundImage=`url(${URL.createObjectURL(b)})`;
+  });
+};
+
+/* BASE64 */
+const to64=f=>new Promise(r=>{
+  const fr=new FileReader();
+  fr.onload=()=>r(fr.result);
+  fr.readAsDataURL(f);
+});
+
+/* EXPORT */
+create.onclick=async()=>{
+  if(images.length!==12){
+    alert("Faltan fotos");
+    return;
+  }
+  const imgs=await Promise.all(images.map(to64));
+
+  const out=`
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nuestro Año 🩷 2025</title>
+<style>
+body{
+  margin:0;
+  background:#f7f6f2;
+  font-family:Poppins,system-ui;
+  display:flex;
+  flex-direction:column;   /* 🔥 CLAVE */
+  align-items:center;      /* 🔥 CLAVE */
+  padding:20px;
+}
+
+body::before{
+  content:"";
+  position:fixed;
+  inset:-30%;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 1), transparent 55%),
+    radial-gradient(circle at 70% 80%, rgba(255, 2, 2, 0.86), transparent 55%),
+    linear-gradient(180deg, #f7f6f2, #fff700ff 80%);
+  animation:bgMove 25s ease-in-out infinite;
+  z-index:-1;
+}
+
+@keyframes bgMove{
+  0%{transform:translate(0,0)}
+  50%{transform:translate(-4%, -3%)}
+  100%{transform:translate(0,0)}
+}
+
+h1{
+  width:100%;
+  text-align:center;
+  font-size:clamp(32px,8vw,48px);
+  margin:20px 0 30px;
+  color:#7a5c2e;
+  font-family:cursive;
+  margin-top:10%;
+  animation: heartbeat 4s ease-in-out infinite;
+}
+@keyframes heartbeat{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.125)}
+}
+
+.grid{
+  max-width:900px;
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:18px;
+}
+
+.card{
+  aspect-ratio:1/1.15;
+  border-radius:22px;
+  background-size:cover;
+  background-position:center;
+  position:relative;
+
+  opacity:0;
+  transform:scale(.9) translateY(0);
+  transition:opacity 1s, transform 1s;
+
+  animation: floatCard 7s ease-in-out infinite;
+}
+
+.card.show{
+  opacity:1;
+  transform:scale(1) translateY(0);
+}
+
+.card:nth-child(even){
+  animation-delay:2s;
+}
+
+@keyframes floatCard{
+  0%   { transform:scale(1) translateY(0); }
+  50%  { transform:scale(1) translateY(-10px); }
+  100% { transform:scale(1) translateY(0); }
+}
+
+
+.month{
+  position:absolute;
+  bottom:10px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#fff;
+  padding:6px 16px;
+  border-radius:20px;
+  font-weight:700;
+  color:#7a5c2e;
+}
+
+#fireworks{
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+}
+
+.wrapper{
+  position:relative;
+  z-index:2;
+}
+
+</style>
+</head>
+<body>
+
+<canvas id="fireworks"></canvas>
+
+<h1>Nuestro Año 🩷 2025</h1>
+<div class="grid">
+${months.map((m,i)=>`
+<div class="card" style="background-image:url('${imgs[i]}')"> 
+  <div class="month">${m}</div>
+</div>`).join("")}
+</div>
+
+<script>
+window.onload=()=>{
+  document.querySelectorAll(".card")
+    .forEach((c,i)=>setTimeout(()=>c.classList.add("show"),400*i));
+};
+
+
+const canvas = document.getElementById("fireworks");
+const ctx = canvas.getContext("2d");
+let w,h;
+
+function resize(){
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resize);
+resize();
+
+const fireworks = [];
+const colors = ["#ff3b6b","#ffd166","#06d6a0","#118ab2","#9b5de5"];
+
+class Firework{
+  constructor(){
+    this.x = Math.random()*w;
+    this.y = h;
+    this.targetY = Math.random()*h*0.4 + h*0.1;
+    this.color = colors[Math.floor(Math.random()*colors.length)];
+    this.speed = Math.random()*1.5 + 1.5;
+    this.exploded = false;
+    this.particles = [];
+  }
+  update(){
+    if(!this.exploded){
+      this.y -= this.speed;
+      if(this.y <= this.targetY){
+        this.exploded = true;
+        for(let i=0;i<70;i++){ // 🔥 más partículas
+          this.particles.push({
+            x:this.x,
+            y:this.y,
+            vx:(Math.random()-0.5)*6,
+            vy:(Math.random()-0.5)*6,
+            life:Math.random()*90+90
+          });
+        }
+      }
+    }
+  }
+  draw(){
+    if(!this.exploded){
+      ctx.fillStyle=this.color;
+      ctx.fillRect(this.x,this.y,2,2);
+    }else{
+      this.particles.forEach(p=>{
+        ctx.fillStyle=this.color;
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,2,0,Math.PI*2);
+        ctx.fill();
+      });
+    }
+  }
+}
+
+// 🔥 EXPLOSIÓN INICIAL
+for(let i=0;i<10;i++){
+  fireworks.push(new Firework());
+}
+
+
+function animate(){
+  ctx.clearRect(0,0,w,h);
+
+ if(Math.random()<0.12){ // 🔥 más frecuencia
+  fireworks.push(new Firework());
+}
+
+  fireworks.forEach((f,i)=>{
+    f.update();
+    if(f.exploded){
+      f.particles.forEach(p=>{
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.03;
+        p.life--;
+      });
+      f.particles = f.particles.filter(p=>p.life>0);
+      if(!f.particles.length) fireworks.splice(i,1);
+    }
+    f.draw();
+  });
+
+  requestAnimationFrame(animate);
+}
+
+animate();
+
+<\/script>
+</body>
+</html>
+`;
+
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([out],{type:"text/html"}));
+  a.download="Nuestro Año 🩷 2025.html";
+  a.click();
+};
+</script>
+
+</body>
+</html>

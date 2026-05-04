@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Libro Marvel 💖</title>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- CONFIGURACIÓN DE VARIABLES Y ESTILOS BASE --- */
+        :root {
+            --book-w: 960px;
+            --book-h: 620px;
+            --page-w: calc(var(--book-w) / 2);
+            --page-h: var(--book-h);
+            --persp: 3600px;
+            --cover-bg: #b03060;
+            --cover-accent: #f8c8dc;
+            --ink: #2c1a1a;
+            --radius: 14px
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        /* Fondo animado con gradiente espacial */
+        body,
+        html {
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Great Vibes', cursive;
+            background: linear-gradient(120deg, #0b0020, #0d1b3d, #203, #001a26);
+            background-size: 400% 400%;
+            animation: gradientShift 30s ease infinite
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0 50% }
+            50% { background-position: 100% 50% }
+            100% { background-position: 0 50% }
+        }
+
+        /* --- ELEMENTOS AMBIENTALES: ESTRELLAS Y CORAZONES --- */
+        .stars {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            overflow: hidden
+        }
+
+        .star {
+            position: absolute;
+            border-radius: 50%;
+            background: #fff;
+            opacity: 0;
+            animation: twinkle linear infinite
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: .2; transform: scale(.8) }
+            50% { opacity: 1; transform: scale(1.4) }
+        }
+
+        .shooting-star {
+            position: fixed;
+            width: 140px;
+            height: 2px;
+            background: linear-gradient(90deg, #fff, transparent);
+            filter: drop-shadow(0 0 6px white);
+            opacity: .9;
+            z-index: 10000;
+            pointer-events: none
+        }
+
+        /* --- ESTRUCTURA DEL LIBRO 3D --- */
+        .scene {
+            position: fixed;
+            inset: 0;
+            perspective: var(--persp);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3
+        }
+
+        .book {
+            width: var(--book-w);
+            height: var(--book-h);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform-style: preserve-3d;
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(.9);
+            transition: opacity 1s ease, transform 1s cubic-bezier(.25, .8, .25, 1)
+        }
+
+        .book.ready {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1)
+        }
+
+        /* Hojas del libro */
+        .sheet {
+            width: var(--page-w);
+            height: var(--page-h);
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform-origin: left center;
+            transform-style: preserve-3d;
+            border-radius: var(--radius);
+            overflow: visible
+        }
+
+        .face {
+            position: absolute;
+            inset: 0;
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
+            border-radius: var(--radius);
+            overflow: hidden
+        }
+
+        .face.left {
+            transform: rotateY(180deg)
+        }
+
+        /* Diseño de las páginas internas y portadas */
+        .page {
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius);
+            color: var(--ink);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+            text-align: center;
+            font-size: 2.6rem;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #fffef9, #fdf6e3);
+            box-shadow: inset 0 0 12px rgba(0, 0, 0, .15);
+            z-index: 0
+        }
+
+        /* --- INTERFAZ Y EFECTOS --- */
+        .audio-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 52px;
+            height: 52px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, .65);
+            color: #fff;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+            pointer-events: auto !important
+        }
+
+        .hearts {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 11000
+        }
+
+        .hearts span {
+            position: absolute;
+            opacity: .85;
+            font-size: 2rem
+        }
+
+        @keyframes floatV {
+            0% { transform: translateY(0) scale(1); opacity: .85 }
+            100% { transform: translateY(-120vh) scale(1.5); opacity: 0 }
+        }
+
+        /* Estilos de sombreado y reflejos para realismo 3D */
+        .shadow {
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .35s ease;
+            mix-blend-mode: multiply
+        }
+
+        .curl-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0
+        }
+    </style>
+</head>
+
+<body>
+    <div class="stars" id="stars"></div>
+    <div class="scene" id="scene">
+        <div class="book closed closed-front" id="book"></div>
+    </div>
+    <div class="hearts" id="hearts"></div>
+
+    <script>
+        !function() {
+            // --- REFERENCIAS AL DOM ---
+            const e = document.getElementById("stars"),
+                t = document.getElementById("hearts"),
+                n = document.getElementById("book"),
+                a = document.getElementById("scene");
+            let o = !1;
+
+            // --- DETECCIÓN DE ORIENTACIÓN ---
+            function s() {
+                const e = innerWidth, t = innerHeight;
+                o = t > e
+            }
+            addEventListener("resize", s);
+            addEventListener("orientationchange", s);
+            s();
+
+            // --- GENERACIÓN DE ESTRELLAS ---
+            for (let t = 0; t < 120; t++) {
+                const t = document.createElement("div");
+                t.className = "star";
+                t.style.left = 100 * Math.random() + "%";
+                t.style.top = 100 * Math.random() + "%";
+                const n = 2 * Math.random() + 1;
+                t.style.width = n + "px";
+                t.style.height = n + "px";
+                t.style.animationDuration = 5 * Math.random() + 3 + "s";
+                t.style.animationDelay = 10 * Math.random() + "s";
+                e.appendChild(t)
+            }
+
+            // --- GENERACIÓN DE ESTRELLAS FUGACES ---
+            setInterval((function() {
+                const e = document.createElement("div");
+                e.className = "shooting-star";
+                e.style.height = 2 * Math.random() + 1 + "px";
+                const t = 1e3 + 3e3 * Math.random();
+                if (o) { // Modo Vertical
+                    e.style.top = 100 * Math.random() + "%";
+                    e.style.left = "110vw";
+                    e.animate([{ transform: "translateX(0)", opacity: 1 }, { transform: "translateX(-130vw)", opacity: 0 }], { duration: t, easing: "linear" })
+                } else { // Modo Horizontal
+                    e.style.top = 100 * Math.random() + "%";
+                    e.style.left = "-150px";
+                    e.animate([{ transform: "translateX(0)", opacity: 1 }, { transform: "translateX(130vw)", opacity: 0 }], { duration: t, easing: "linear" })
+                }
+                document.body.appendChild(e);
+                setTimeout((() => e.remove()), t)
+            }), 600);
+
+            // --- GENERACIÓN DE CORAZONES FLOTANTES ---
+            setInterval((() => {
+                const e = document.createElement("span");
+                e.textContent = ["❤️", "💗", "💖", "💕"][Math.floor(4 * Math.random())];
+                e.style.setProperty("--dur", 3 * Math.random() + 3 + "s");
+                e.style.left = 100 * Math.random() + "%";
+                e.style.fontSize = 1.5 * Math.random() + 1.2 + "rem";
+                t.appendChild(e);
+                setTimeout((() => e.remove()), 7e3)
+            }), 900);
+
+            // --- LÓGICA MULTIMEDIA (AUDIO) ---
+            const r = Math.ceil(3) + 1, i = {}, d = {};
+
+            function c(e) { // Detiene otros audios al cambiar de página
+                for (const t in i)+t !== e && (i[t].pause(), d[t] && (d[t].textContent = "▶️"))
+            }
+
+            // Carga de páginas con imágenes de Marvel y audios correspondientes
+            const l = e => {
+                const t = document.createElement("div");
+                t.className = "page";
+                const urls = {
+                    1: 'dcstringe.png', 2: 'capitan.png', 3: 'tor.png',
+                    4: 'lokii.png', 5: 'spider.png', 6: 'iroman.png'
+                };
+                if (urls[e]) t.style.background = `url('https://adfy2.icu/img/${urls[e]}') center/cover no-repeat`;
+                
+                t.innerHTML = `<div class="folio">${e}</div>`;
+
+                const n = document.createElement("audio");
+                const music = {
+                    1: 'stringe.mp3', 2: 'capitan.mp3', 3: 'thor.mp3',
+                    4: 'loki.mp3', 5: 'spiderman.mp3', 6: 'ironman.mp3'
+                };
+                n.src = music[e] ? `https://adfy2.icu/img/music/${music[e]}` : "";
+                n.preload = "none";
+                t.appendChild(n);
+
+                // Botón de Play/Pausa
+                const a = document.createElement("button");
+                a.textContent = "▶️";
+                a.className = "audio-btn";
+                // ... (Estilos inline omitidos por brevedad pero mantenidos en el original)
+
+                const o = e => { e.stopPropagation(); e.stopImmediatePropagation() };
+                a.addEventListener("click", (t => {
+                    t.stopPropagation();
+                    if (n.paused) {
+                        c(e);
+                        n.play().then(() => a.textContent = "⏸️").catch(e => console.warn("Bloqueado:", e))
+                    } else {
+                        n.pause();
+                        a.textContent = "▶️"
+                    }
+                }));
+
+                i[e] = n; d[e] = a;
+                t.appendChild(a);
+                return t
+            };
+
+            // --- CONSTRUCCIÓN DE PORTADAS ---
+            const p = () => { /* Crea Portada Frontal */
+                const e = document.createElement("div");
+                e.className = "cover";
+                e.style.background = "url('https://adfy2.icu/img/portadaa.png') center/cover no-repeat";
+                return e
+            };
+
+            const m = () => { /* Crea Contraportada */
+                const e = document.createElement("div");
+                e.className = "cover cover-back";
+                e.style.background = "url('https://adfy2.icu/img/atras.png') center/cover no-repeat";
+                return e
+            };
+
+            // --- ENSAMBLAJE DE LAS HOJAS ---
+            const u = [];
+            for (let e = 0; e < r; e++) {
+                const t = document.createElement("div");
+                t.className = "sheet";
+                t.dataset.i = e;
+                t._a = 0; t._t = 0; t._v = 0; // Variables para física de rotación
+                t.style.zIndex = 4e3 - e;
+
+                const a = document.createElement("div"); a.className = "face right";
+                const o = document.createElement("div"); o.className = "face left";
+                const s = document.createElement("div"); s.className = "inner";
+                const i = document.createElement("div"); i.className = "inner";
+
+                if (0 === e) {
+                    s.appendChild(p()); i.appendChild(l(1))
+                } else if (e === r - 1) {
+                    s.appendChild(l(6)); i.appendChild(m())
+                } else {
+                    s.appendChild(l(2 * e)); i.appendChild(l(2 * e + 1))
+                }
+
+                a.appendChild(s); o.appendChild(i);
+                t.appendChild(a); t.appendChild(o);
+
+                const f = document.createElement("div"); f.className = "shadow";
+                t.appendChild(f); t._shadow = f;
+                t.addEventListener("pointerdown", b);
+                t.addEventListener("touchstart", b);
+                n.appendChild(t);
+                u.push(t)
+            }
+
+            // --- MOTOR DE ANIMACIÓN Y FÍSICA ---
+            let h = 0; const y = 1 / 60; let g = !1;
+
+            function v() { // Función que anima el giro de la página
+                g = !0; let e = !1;
+                for (const t of u) {
+                    const n = t._t - t._a;
+                    t._v += (14 * n - 5 * t._v) * y; // Inercia
+                    t._a += t._v * y; // Ángulo actual
+                    // Limitadores
+                    if (t._a < 0) { t._a = 0; t._v = 0 }
+                    if (t._a > Math.PI) { t._a = Math.PI; t._v = 0 }
+
+                    const a = 180 * -t._a / Math.PI;
+                    t.style.transform = `rotateY(${a}deg)`;
+
+                    // Manejo de sombras dinámicas
+                    const o = t._a / Math.PI;
+                    if (o > 0 && o < 1) {
+                        const e = o < .5 ? .55 * o : .55 * (1 - o);
+                        t._shadow.style.opacity = e > .01 ? 1 : 0
+                    } else t._shadow.style.opacity = 0;
+
+                    // Ajuste de Z-index durante el giro
+                    const s = 180 * t._a / Math.PI;
+                    t.style.zIndex = s < 90 ? 4e3 - +t.dataset.i : +t.dataset.i + 6e3;
+                    if (Math.abs(n) > .001) e = !0
+                }
+                e ? requestAnimationFrame(v) : g = !1
+            }
+
+            // --- RESPONSIVIDAD Y GESTOS ---
+            function f() { /* Ajusta escala del libro a la pantalla */ }
+            let x = null;
+            function E(e) { return e.touches && e.touches.length ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : { x: e.clientX, y: e.clientY } }
+            
+            function b(e) { /* Inicia el arrastre de la página */
+                const t = E(e), n = e.currentTarget, a = +n.dataset.i;
+                if (a !== h && a !== h - 1) return;
+                x = { s: n, i: a, sx: t.x, sy: t.y, sa: n._a };
+                document.addEventListener("pointermove", C);
+                document.addEventListener("pointerup", M, { once: !0 })
+            }
+
+            function C(e) { /* Mueve la página según el ratón/dedo */
+                if (!x) return;
+                const t = E(e), { s: o, sx: s, sy: r, sa: i } = x;
+                let d = t.x - s, c = .5 * a.clientWidth;
+                let l = i - d / c * Math.PI;
+                o._t = Math.max(0, Math.min(Math.PI, l));
+                if (!g) v()
+            }
+
+            function M() { /* Suelta la página y decide si pasa o regresa */
+                if (!x) return;
+                const { s: e, i: t } = x; x = null;
+                const n = e._a >= Math.PI / 2;
+                e._t = n ? Math.PI : 0;
+                h = n ? Math.max(h, t + 1) : Math.min(h, t);
+                if (!g) v(); f()
+            }
+
+            addEventListener("resize", f);
+            addEventListener("load", (() => { f(); setTimeout(() => n.classList.add("ready"), 100) }))
+        }();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+<title>Mi enojona 😡</title>
+<style>
+:root{
+  --card:#ffffffcc; --txt:#2a2a2a; --yes:#27c16f;
+}
+html,body{
+  margin:0; height:100%; overflow:hidden;
+  font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;
+  background:#0b0015;
+  display:flex; justify-content:center; align-items:center;
+  position:relative;
+  overflow-x:hidden;
+}
+
+/* 🌈 Fondo aurora */
+#aurora{
+  position:fixed; inset:0; z-index:0;
+  background:linear-gradient(160deg,#ffb3c6 0%, #ff8fab 35%, #d291bc 70%, #957dad 100%);
+  filter:blur(8px);
+}
+
+/* ❤️ Corazones flotantes */
+#bubbles{position:fixed;inset:0;z-index:1;overflow:hidden;}
+.heart{
+  position:absolute;bottom:-60px;width:26px;height:26px;
+  transform:rotate(-45deg);border-radius:16px;opacity:0.8;
+  animation:floatUp linear infinite;
+}
+.heart::before,.heart::after{
+  content:'';position:absolute;width:26px;height:26px;border-radius:50%;
+}
+.heart::before{top:-13px;left:0;}
+.heart::after{left:13px;top:0;}
+@keyframes floatUp{
+  0%{transform:translateY(0) rotate(-45deg) scale(.9);opacity:0;}
+  20%{opacity:1;}
+  100%{transform:translateY(-110vh) rotate(-45deg) scale(1.4);opacity:0;}
+}
+
+/* 🌈 Borde animado */
+.cardWrapper{
+  position:relative;border-radius:28px;padding:6px;
+  background:linear-gradient(90deg,#ff0055,#ff7b00,#ffee00,#00ff9d,#00c3ff,#b200ff,#ff0055);
+  background-size:600% 600%;
+  animation:rainbowFlow 10s linear infinite;
+  box-shadow:0 0 35px rgba(255,120,200,0.4);
+  z-index:2;
+  opacity:0;
+  transform:translateY(40px) scale(0.96);
+  transition:opacity 1s ease, transform 1s ease;
+  margin:0 auto;max-width:440px;width:90vw;box-sizing:border-box;
+}
+.cardWrapper.visible{
+  opacity:1;
+  transform:translateY(0) scale(1);
+}
+@keyframes rainbowFlow{
+  0%{background-position:0% 50%;}
+  50%{background-position:100% 50%;}
+  100%{background-position:0% 50%;}
+}
+
+/* 💌 Tarjeta interna */
+.card{
+  background:rgba(255,255,255,0.85);backdrop-filter:blur(10px);
+  border-radius:24px;padding:26px 22px 22px;text-align:center;
+  width:min(440px,90vw);
+  box-shadow:0 4px 12px rgba(0,0,0,.25),
+              inset 0 4px 8px rgba(255,255,255,.4);
+  transition:transform .3s ease;
+  z-index:3;
+  min-height:520px;
+  box-sizing:border-box;
+}
+.gifBox{width:100%;height:300px;border-radius:18px;overflow:hidden;margin-bottom:18px;background:#fff3;}
+.gifBox img{width:100%;height:100%;object-fit:cover;display:block;}
+
+/* 💓 Latido */
+@keyframes heartbeat{0%,100%{transform:scale(1);}25%{transform:scale(1.03);}50%{transform:scale(0.97);}75%{transform:scale(1.05);}}
+.card.heartbeat{animation:heartbeat 1.3s ease-in-out;}
+
+/* Botón siguiente */
+.btnRow{display:flex;justify-content:center;}
+.btn{
+  min-width:180px;padding:18px 26px;font-size:22px;border:none;cursor:pointer;
+  border-radius:24px;color:#fff;font-weight:800;letter-spacing:.5px;background:var(--yes);
+  box-shadow:0 12px 25px rgba(0,0,0,.25);animation:btnPulse 2.5s ease-in-out infinite;
+}
+@keyframes btnPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.06);}}
+.yes:hover{transform:scale(1.08);}
+h1{font-size:38px;font-weight:900;color:#ff2c7d;text-shadow:0 0 15px rgba(255,100,180,.5);animation:glow 3s ease-in-out infinite;}
+@keyframes glow{0%,100%{text-shadow:0 0 10px rgba(255,100,180,.5);}50%{text-shadow:0 0 25px rgba(255,180,220,.8);}}
+
+/* 🎬 Pantalla de inicio */
+#startScreen{
+  position:fixed;inset:0;z-index:10;
+  background:radial-gradient(circle at 50% 40%,rgba(255,255,255,.2),rgba(0,0,0,.7));
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  backdrop-filter:blur(6px);color:#fff;text-align:center;
+  opacity:1;visibility:visible;pointer-events:auto;
+  transition:opacity 0.8s ease, visibility 0.8s ease;
+}
+#startScreen.fadeOut{
+  opacity:0;visibility:hidden;pointer-events:none;
+}
+#startScreen h2{font-size:28px;margin-bottom:30px;text-shadow:0 0 15px #ff9edf;}
+#startBtn{
+  padding:16px 40px;border:none;border-radius:30px;
+  background:linear-gradient(90deg,#ff4dc4,#ff9edf,#ffd6e0);
+  font-size:22px;font-weight:700;color:#fff;cursor:pointer;
+  animation:pulseBtn 2.5s ease-in-out infinite;box-shadow:0 0 25px #ff9edf;
+}
+@keyframes pulseBtn{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+
+/* Oculto al inicio */
+.hidden{display:none;}
+
+/* 📱 Responsive */
+@media (max-width:600px){
+  .cardWrapper{width:90vw;max-width:420px;margin:0 auto;padding:6px;border-radius:26px;box-sizing:border-box;}
+  .card{width:100%;min-height:520px;display:flex;flex-direction:column;justify-content:space-between;}
+  .gifBox{flex-shrink:0;height:280px;}
+  h1{font-size:34px;line-height:1.2;}
+  .btn{font-size:20px;min-width:160px;padding:16px 20px;}
+}
+</style>
+</head>
+<body>
+
+<div id="aurora"></div>
+<div id="bubbles"></div>
+ 
+<!-- 🩷 Pantalla inicial -->
+<div id="startScreen">
+  <h2>💌 Tienes un mensaje 💖</h2>
+  <button id="startBtn">🩷 Abrir 🩷</button>
+</div>
+
+<!-- 💖 Tarjeta principal -->
+<div class="cardWrapper hidden" id="mainContent">
+  <div class="card" id="card">
+    <div class="gifBox"><img id="cat" alt="cat gif"></div>
+    <h1 id="title">Mi Enojona 😡</h1>
+    <div class="btnRow">
+      <button class="btn yes" id="btnYes">Siguiente</button>
+    </div>
+  </div> 
+</div> 
+
+<!-- 🎵 Música romántica -->
+<!-- 🎵 Música romántica personalizada -->
+<audio id="bgMusic" src="https://www.dropbox.com/scl/fi/09lhbf7073g05f2n0gw1i/Eres-mi-enojona.mp3?rlkey=tcbn1krstv5vwmvwmr6f8n0dv&st=5ig3xqmp&raw=1"></audio>
+
+
+<script>
+/* ❤️ Corazones flotantes */
+const bubbleContainer=document.getElementById("bubbles");
+const colors=["#ff6fb1","#ff9aff","#ff8ad0","#ffb6a9","#ffd86f","#9cfaff","#c79aff"];
+for(let i=0;i<25;i++){
+  const h=document.createElement("div");
+  h.classList.add("heart");
+  const size=20+Math.random()*40;
+  const color=colors[Math.floor(Math.random()*colors.length)];
+  h.style.width=h.style.height=size+"px";
+  h.style.left=Math.random()*100+"%";
+  h.style.animationDuration=(15+Math.random()*15)+"s";
+  h.style.animationDelay=(Math.random()*10)+"s";
+  h.style.background=color;
+  bubbleContainer.appendChild(h);
+}
+
+/* 🎵 Música y transición */
+const bgMusic=document.getElementById("bgMusic"); 
+const startBtn=document.getElementById("startBtn");
+const startScreen=document.getElementById("startScreen");
+const mainContent=document.getElementById("mainContent");
+
+startBtn.addEventListener("click",()=>{
+  startScreen.classList.add("fadeOut");
+
+  // Transición suave hacia la tarjeta
+  setTimeout(()=>{
+    startScreen.classList.add("hidden");
+    mainContent.classList.remove("hidden");
+    setTimeout(()=> mainContent.classList.add("visible"),100);
+    updateStage(0);
+  },800);
+
+  // 🎵 Inicia la música 2 segundos después
+  setTimeout(()=>{
+    bgMusic.volume=0.7;
+    bgMusic.play().catch(()=>{});
+  },1000);
+});
+
+/* 🐱 Gifs y texto */
+const gifs=[
+ "https://media.giphy.com/media/1gv7WwUYJlaRKWVtok/giphy.gif",
+ "https://media.giphy.com/media/qfQgXxBz1nvWEbOxyb/giphy.gif",
+ "https://media.giphy.com/media/L6KNDkjmEgmhgUL1Sa/giphy.gif",
+ "https://media.giphy.com/media/muNco7WDh8n0D24MvH/giphy.gif"
+];
+const steps=[
+ {title:"Eres mi enojona 😡"},
+ {title:"Mi pequeña princesita 👸"},
+ {title:"Mi niña preciosa 😍"},
+ {title:"Mi todo ❤️🌎💥"}
+];
+
+const cat=document.getElementById('cat');
+const title=document.getElementById('title');
+const sub=document.getElementById('sub');
+const btnYes=document.getElementById('btnYes');
+const card=document.getElementById('card');
+
+let stage=0;
+
+function updateStage(i){
+  cat.src=gifs[i];
+  title.textContent=steps[i].title;
+  card.style.animation='heartbeat 1.3s ease-in-out';
+  setTimeout(()=>card.style.animation='',1300);
+
+  // 💖 Mostrar el botón normalmente
+  if(i<gifs.length-1){ 
+    btnYes.style.display="block";
+    btnYes.style.opacity="1";
+    btnYes.style.pointerEvents="auto";
+  }
+
+  // 💞 Ocultar el botón automáticamente en el último GIF
+  if(i===gifs.length-1){
+    btnYes.style.transition="opacity 0.5s ease";
+    btnYes.style.opacity="0";
+    btnYes.style.pointerEvents="none";
+    setTimeout(()=>btnYes.style.display="none",500);
+  }
+}
+
+/* 🔘 Evento del botón */
+btnYes.addEventListener('click',()=>{
+  stage++;
+  if(stage<gifs.length){
+    updateStage(stage);
+  }
+});
+</script>
+</body>
+</html>

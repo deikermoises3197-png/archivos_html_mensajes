@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loveflix</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body { background: #141414; color: white; font-family: 'Open Sans', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; text-align: center; }
+  h1 { font-family: 'Bebas Neue'; color: #e50914; font-size: 3.5rem; margin: 0 0 5px 0; letter-spacing: 2px; }
+  p { color: #aaa; margin-bottom: 30px; font-size: 1rem; max-width: 400px; line-height: 1.4; }
+  .upload-zone { border: 2px dashed #444; background: #1f1f1f; border-radius: 20px; padding: 30px 15px; width: 90%; max-width: 380px; cursor: pointer; transition: all 0.3s ease; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+  .upload-zone:hover { border-color: #e50914; background: #252525; transform: translateY(-2px); }
+  .upload-zone.valid { border-color: #46d369; background: #1a2e1e; }
+  #fileInput { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+  .icon { font-size: 2.5rem; margin-bottom: 10px; display: block; }
+  .info-text { font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 5px; }
+  .small-text { font-size: 0.85rem; color: #888; display: block; }
+  .btn-generate { background: #e50914; color: white; border: none; padding: 15px; font-size: 1.3rem; font-weight: bold; border-radius: 50px; cursor: pointer; transition: 0.3s; font-family: 'Bebas Neue'; letter-spacing: 1px; margin-top: 25px; width: 90%; max-width: 380px; opacity: 0.5; pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+  .btn-generate.active { opacity: 1; pointer-events: auto; box-shadow: 0 5px 20px rgba(229, 9, 20, 0.4); }
+  .btn-generate:hover { transform: scale(1.02); background: #f40612; }
+  #status { margin-top: 20px; color: #46d369; font-weight: bold; height: 20px; font-size: 0.9rem; }
+  #error-msg { color: #e50914; font-weight: bold; margin-top: 15px; display: none; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+  <h1>LOVEFLIX MAKER</h1>
+  <p>Selecciona 11 fotos de una sola vez.<br>La primera será la portada animada, las demás tus recuerdos.</p>
+  <div class="upload-zone" id="dropZone">
+    <span class="icon">📂</span>
+    <span class="info-text" id="labelMain">TOCA PARA ELEGIR 11 FOTOS</span>
+    <span class="small-text" id="labelSub">(Selecciónalas todas juntas)</span>
+    <input type="file" id="fileInput" multiple accept="image/*">
+  </div>
+  <div id="error-msg">⚠️ Debes seleccionar exactamente 11 fotos.</div>
+  <button class="btn-generate" id="btnGen" onclick="generateLoveflix()">CREAR REGALO</button>
+  <div id="status"></div>
+
+<script>
+  const fileInput = document.getElementById('fileInput'); const dropZone = document.getElementById('dropZone'); const labelMain = document.getElementById('labelMain'); const labelSub = document.getElementById('labelSub'); const btnGen = document.getElementById('btnGen'); const errorMsg = document.getElementById('error-msg');
+  fileInput.addEventListener('change', function() { const count = this.files.length; if (count === 11) { dropZone.classList.add('valid'); labelMain.innerText = "¡LISTO PARA CREAR!"; labelSub.innerText = "11 fotos cargadas correctamente."; labelMain.style.color = "#46d369"; btnGen.classList.add('active'); errorMsg.style.display = 'none'; } else { dropZone.classList.remove('valid'); labelMain.innerText = `Elegiste ${count} fotos`; labelSub.innerText = "Necesitamos exactamente 11."; labelMain.style.color = "white"; btnGen.classList.remove('active'); errorMsg.style.display = 'block'; if(count === 0) { labelMain.innerText = "TOCA PARA ELEGIR 11 FOTOS"; labelSub.innerText = "(Selecciónalas todas juntas)"; errorMsg.style.display = 'none'; } } });
+  function compressImage(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = (event) => { const img = new Image(); img.src = event.target.result; img.onload = () => { const canvas = document.createElement('canvas'); const MAX_WIDTH = 800; const scaleSize = MAX_WIDTH / img.width; canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize; const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height); resolve(canvas.toDataURL('image/jpeg', 0.75)); }; }; reader.onerror = (error) => reject(error); }); }
+  async function generateLoveflix() { const files = fileInput.files; const status = document.getElementById('status'); btnGen.innerText = "PROCESANDO..."; try { const images = []; for (let i = 0; i < 11; i++) { status.innerText = `Optimizando foto ${i + 1} de 11...`; const base64 = await compressImage(files[i]); images.push(base64); } status.innerText = "Creando archivo..."; let code = template; code = code.replace('__HERO_IMG__', images[0]); for (let i = 1; i < 11; i++) { code = code.split(`__IMG_${i}__`).join(images[i]); } const blob = new Blob([code], { type: 'text/html' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'loveflix_para_ti.html'; document.body.appendChild(a); a.click(); document.body.removeChild(a); status.innerText = "¡Regalo creado con exito!"; btnGen.innerText = "¡LISTO!"; } catch (error) { alert("Hubo un error: " + error.message); btnGen.innerText = "INTENTAR DE NUEVO"; } } 
+
+  // --- PLANTILLA CON ZOOM RÁPIDO (10 SEGUNDOS) ---
+  const template = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loveflix - Nuestra Historia</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+  :root { --primary: #e50914; --dark: #141414; }
+  * { box-sizing: border-box; }
+  body { background-color: var(--dark); color: white; font-family: 'Open Sans', sans-serif; margin: 0; overflow-x: hidden; }
+  #netflix-intro { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: black; z-index: 99999; display: flex; justify-content: center; align-items: center; }
+  .intro-text { font-family: 'Bebas Neue', sans-serif; color: #e50914; font-size: 4rem; letter-spacing: 5px; opacity: 0; animation: netflix-anim 3.5s ease-out forwards; transform-origin: center; }
+  @keyframes netflix-anim { 0% { opacity: 0; transform: scale(0.5); } 20% { opacity: 1; transform: scale(1); } 85% { opacity: 1; transform: scale(1.5); color: #e50914; } 100% { opacity: 0; transform: scale(4); color: transparent; } }
+  .navbar { position: fixed; top: 0; width: 100%; padding: 20px 4%; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.5s; z-index: 100; background: linear-gradient(to bottom, rgba(0,0,0,0.7) 10%, rgba(0,0,0,0)); }
+  .navbar.black { background-color: var(--dark); }
+  .logo { color: #e50914; font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 2px; }
+  .nav-links { display: flex; gap: 20px; font-size: 0.9rem; }
+  .nav-links a { text-decoration: none; color: white; transition: 0.3s; }
+  
+  /* --- PORTADA ANIMADA MÁS RÁPIDA (10s) --- */
+  .hero { 
+    height: 80vh; 
+    position: relative; 
+    background-color: #222; 
+    overflow: hidden; 
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: url('__HERO_IMG__') center/cover no-repeat;
+    z-index: 0;
+    /* AQUÍ ESTÁ EL CAMBIO DE VELOCIDAD: 10s */
+    animation: hero-zoom 10s ease-in-out infinite alternate; 
+  }
+  .hero::after { 
+    content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+    background: linear-gradient(to top, #141414 1%, transparent 60%), linear-gradient(to right, rgba(0,0,0,0.8) 0%, transparent 50%); 
+    z-index: 1;
+  }
+  @keyframes hero-zoom {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.15); } /* Un poco más de zoom también */
+  }
+
+  .hero-content { position: absolute; bottom: 30%; left: 4%; z-index: 10; max-width: 600px; }
+  .hero-title { font-family: 'Bebas Neue', sans-serif; font-size: 4.5rem; line-height: 0.9; margin-bottom: 15px; font-weight: bold; text-shadow: 2px 2px 4px black; }
+  .btn { padding: 0.8rem 1.8rem; border-radius: 4px; border: none; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-right: 15px; display: inline-flex; align-items: center; gap: 10px; transition: all 0.3s ease; }
+  .btn-white { background: white; color: black; }
+  .btn-white:hover { transform: scale(1.05); background: #fff; box-shadow: 0 0 20px rgba(255,255,255,0.4); }
+  .btn-gray { background: rgba(109, 109, 110, 0.7); color: white; }
+  .btn-gray:hover { background: rgba(109, 109, 110, 0.9); border: 1px solid white; }
+  .btn:active { transform: scale(0.95) !important; }
+  .category { margin: 20px 0 40px 4%; }
+  .category h2 { font-size: 1.2rem; color: #e5e5e5; margin-bottom: 10px; font-weight: 600; }
+  .row { display: flex; gap: 10px; padding-right: 4%; padding-bottom: 30px; overflow-x: auto; cursor: grab; scrollbar-width: none; -ms-overflow-style: none; user-select: none; -webkit-user-select: none; }
+  .row::-webkit-scrollbar { display: none; }
+  .row.active { cursor: grabbing; }
+  .card { min-width: 160px; height: 280px; background: #333; border-radius: 4px; position: relative; transition: all 0.2s; overflow: hidden; cursor: pointer; border: 2px solid transparent; }
+  .card img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+  @media (hover: hover) { .card:hover { border: 2px solid white; opacity: 0.8; } }
+  .modal-overlay { position: fixed; top:0; left:0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; justify-content: center; align-items: start; opacity: 0; pointer-events: none; transition: opacity 0.3s; overflow-y: auto; padding-top: 50px; backdrop-filter: blur(8px); }
+  .modal-overlay.active { opacity: 1; pointer-events: auto; }
+  .modal-content { background: #181818; width: 95%; max-width: 850px; border-radius: 10px; overflow: hidden; position: relative; transform: scale(0.9); transition: transform 0.3s; box-shadow: 0 0 50px rgba(0,0,0,0.8); margin-bottom: 50px; }
+  .modal-overlay.active .modal-content { transform: scale(1); }
+  .modal-header { height: 450px; background-size: cover; background-position: center center; position: relative; }
+  .modal-header::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 60%; background: linear-gradient(to top, #181818, transparent); }
+  .close-btn { position: absolute; top: 15px; right: 15px; background: #181818; color: white; width: 35px; height: 35px; border-radius: 50%; border: none; cursor: pointer; font-size: 1.2rem; z-index: 20; }
+  .modal-body { padding: 20px 40px 40px 40px; display: flex; gap: 30px; }
+  .modal-left { flex: 2; }
+  .modal-right { flex: 1; font-size: 0.9rem; color: #777; }
+  .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; margin: 0 0 10px 0; line-height: 1; text-shadow: 2px 2px 4px black;}
+  .modal-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; font-weight: bold; font-size: 0.9rem;}
+  .match { color: #46d369; }
+  .modal-desc { font-size: 1.1rem; line-height: 1.5; color: white; margin-top: 20px; }
+  #info-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; display: none; justify-content: center; align-items: center; padding: 20px; }
+  .info-content { background: #181818; padding: 40px; border-radius: 10px; max-width: 600px; text-align: center; border: 1px solid #333; }
+  .heart-float { position: fixed; color: #e50914; font-size: 2rem; animation: floatUp 3s linear forwards; z-index: 5000; }
+  @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-100vh); } }
+  @media (max-width: 768px) {
+    .hero-content { bottom: 10%; }
+    .hero-title { font-size: 3rem; }
+    .modal-body { flex-direction: column; padding: 20px; } 
+    .modal-header { height: 350px; } 
+    .card { min-width: 140px; height: 240px; } 
+  }
+</style>
+</head>
+<body>
+  <div id="netflix-intro"><div class="intro-text">LOVEFLIX</div></div>
+  <nav class="navbar" id="navbar">
+    <div class="logo">LOVEFLIX</div>
+    <div class="nav-links"><a href="#">Inicio</a><a href="#">Recuerdos</a></div>
+  </nav>
+  <header class="hero">
+    <div class="hero-content">
+      <div class="hero-title">ERES MI DESTINO</div>
+      <p style="font-size: 1.2rem; margin-bottom: 20px; text-shadow: 1px 1px 2px black;">Una serie original basada en hechos reales. <br>Temporada infinita.</p>
+      <div class="buttons">
+        <button class="btn btn-white" onclick="playAction()"><i class="fas fa-play"></i> Reproducir</button>
+        <button class="btn btn-gray" onclick="infoAction()"><i class="fas fa-info-circle"></i> Más Información</button>
+      </div>
+    </div>
+  </header>
+  <div id="info-modal" onclick="this.style.display='none'">
+    <div class="info-content">
+      <h2 style="font-family:'Bebas Neue'; font-size:2.5rem; margin:0 0 20px 0;">SINOPSIS</h2>
+      <p style="font-size:1.1rem; line-height:1.6;">Esta es la historia de dos personas cuyo destino estaba escrito. Una trama llena de risas, apoyo incondicional y momentos inolvidables. Clasificada como la mejor historia de amor de todos los tiempos.</p>
+      <p style="color:#777; margin-top:20px;">Presiona cualquier lugar para cerrar</p>
+    </div>
+  </div>
+  <div class="category" id="memories">
+    <h2>Momentos Inolvidables</h2>
+    <div class="row drag-scroll">
+      <div class="card" data-title="Nuestro Comienzo" data-desc="El inicio de la mejor aventura de mi vida." data-year="Cap. 1" data-img="__IMG_1__"><img src="__IMG_1__"></div>
+      <div class="card" data-title="Momentos Mágicos" data-desc="Coleccionando instantes que valen oro." data-year="Cap. 2" data-img="__IMG_2__"><img src="__IMG_2__"></div>
+      <div class="card" data-title="Tu Sonrisa" data-desc="El motivo de mi felicidad todos los días." data-year="Cap. 3" data-img="__IMG_3__"><img src="__IMG_3__"></div>
+      <div class="card" data-title="Juntos es Mejor" data-desc="No importa dónde, sino con quién." data-year="Cap. 4" data-img="__IMG_4__"><img src="__IMG_4__"></div>
+      <div class="card" data-title="Amor Infinito" data-desc="Una historia sin fin." data-year="Cap. 5" data-img="__IMG_5__"><img src="__IMG_5__"></div>
+    </div>
+  </div>
+  <div class="category">
+    <h2>Grandes Éxitos</h2>
+    <div class="row drag-scroll">
+        <div class="card" data-title="Cómplices" data-desc="En las buenas, en las malas y en las peores." data-year="Extra" data-img="__IMG_6__"><img src="__IMG_6__"></div>
+        <div class="card" data-title="Nuestras Locuras" data-desc="Haciendo que la vida sea divertida." data-year="Extra" data-img="__IMG_7__"><img src="__IMG_7__"></div>
+        <div class="card" data-title="Paz Mental" data-desc="Mi refugio seguro eres tú." data-year="Extra" data-img="__IMG_8__"><img src="__IMG_8__"></div>
+        <div class="card" data-title="Días de Sol" data-desc="Iluminas mis días grises." data-year="Extra" data-img="__IMG_9__"><img src="__IMG_9__"></div>
+        <div class="card" data-title="Equipo Perfecto" data-desc="Juntos somos invencibles." data-year="Extra" data-img="__IMG_10__"><img src="__IMG_10__"></div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="modal">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeModal()">×</button>
+      <div class="modal-header" id="modal-img"></div>
+      <div class="modal-body">
+        <div class="modal-left">
+          <div class="modal-meta"><span class="match">100% Amor</span><span class="year" id="modal-year">2024</span><span style="border:1px solid #777; padding:0 4px;">HD</span></div>
+          <h1 class="modal-title" id="modal-title">TITULO</h1>
+          <p class="modal-desc" id="modal-desc">Descripción...</p>
+          <div class="buttons" style="margin-top:20px;"><button class="btn btn-white" onclick="playAction()"><i class="fas fa-play"></i> Reproducir</button><button class="btn btn-gray"><i class="fas fa-plus"></i> Mi Lista</button></div>
+        </div>
+        <div class="modal-right"><p><span style="color:#bbb">Elenco:</span> Tú y Yo</p><p><span style="color:#bbb">Géneros:</span> Romance</p><p><span style="color:#bbb">Recuerdo:</span> Inolvidable</p></div>
+      </div>
+    </div>
+  </div>
+<script>
+  function playAction() { for(let i=0; i<15; i++) { let heart = document.createElement('div'); heart.innerHTML = '❤️'; heart.className = 'heart-float'; heart.style.left = Math.random() * 100 + 'vw'; heart.style.top = '100vh'; heart.style.fontSize = (Math.random() * 20 + 20) + 'px'; heart.style.animationDuration = (Math.random() * 2 + 2) + 's'; document.body.appendChild(heart); setTimeout(() => heart.remove(), 4000); } document.getElementById('memories').scrollIntoView({behavior: 'smooth'}); }
+  function infoAction() { document.getElementById('info-modal').style.display = 'flex'; }
+  window.onload = function() { setTimeout(() => { const intro = document.getElementById('netflix-intro'); if(intro) intro.style.display = 'none'; }, 3800); };
+  window.addEventListener('scroll', () => { const navbar = document.getElementById('navbar'); if (window.scrollY > 50) navbar.classList.add('black'); else navbar.classList.remove('black'); });
+  const sliders = document.querySelectorAll('.drag-scroll');
+  let isDown = false; let startX; let scrollLeft; let velX = 0; let momentumID; let isDragging = false; let lastX = 0; 
+  sliders.forEach(slider => {
+    slider.addEventListener('mousedown', (e) => { isDown = true; isDragging = false; slider.classList.add('active'); startX = e.pageX - slider.offsetLeft; lastX = e.pageX; scrollLeft = slider.scrollLeft; velX = 0; cancelAnimationFrame(momentumID); });
+    slider.addEventListener('mouseleave', () => { if(isDown) endDrag(slider); isDown = false; });
+    slider.addEventListener('mouseup', () => { if(isDown) endDrag(slider); isDown = false; setTimeout(() => isDragging = false, 50); });
+    slider.addEventListener('mousemove', (e) => { if (!isDown) return; e.preventDefault(); const x = e.pageX - slider.offsetLeft; const walk = (x - startX) * 1; slider.scrollLeft = scrollLeft - walk; velX = e.pageX - lastX; lastX = e.pageX; if(Math.abs(walk) > 5) isDragging = true; });
+    slider.addEventListener('touchstart', () => { isDragging = false; }); slider.addEventListener('touchmove', () => { isDragging = true; }); 
+  });
+  function endDrag(slider) { slider.classList.remove('active'); if (velX > 20) velX = 20; if (velX < -20) velX = -20; function momentumLoop() { slider.scrollLeft -= velX; velX *= 0.90; if (Math.abs(velX) > 0.5) { momentumID = requestAnimationFrame(momentumLoop); } } momentumLoop(); }
+  const modal = document.getElementById('modal'); const modalTitle = document.getElementById('modal-title'); const modalDesc = document.getElementById('modal-desc'); const modalYear = document.getElementById('modal-year'); const modalImg = document.getElementById('modal-img');
+  document.querySelectorAll('.card').forEach(card => { card.addEventListener('click', function() { if(isDragging) return; openModal(this.getAttribute('data-title'), this.getAttribute('data-desc'), this.getAttribute('data-year'), this.getAttribute('data-img')); }); });
+  function openModal(title, desc, year, image) { modalTitle.innerText = title; modalDesc.innerText = desc; modalYear.innerText = year; modalImg.style.backgroundImage = "url('" + image + "')"; modal.classList.add('active'); }
+  function closeModal() { modal.classList.remove('active'); }
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+<\/script>
+</body>
+</html>`;
+</script>
+</body>
+</html>
